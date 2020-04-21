@@ -1,0 +1,19 @@
+# Game 3
+
+# Fedrorov, Alexey
+# Shirov, Alexey
+# Leon Ech - tt 2001
+
+1. e4 e5
+2. Bc4 Nf6!
+3. d3 c6
+4. Nf3 d5
+5. Bb3 Bd6
+6. Nc3 dxe4
+7. Ng5 O-O
+8. Ncxe4 Nxe4
+9. Nxe4 a5
+10. Qh5! Be7
+11. a3 a4
+12. Ba2 Nd7
+13. O-O(W-) C
