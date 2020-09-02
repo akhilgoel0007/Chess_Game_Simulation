@@ -11,6 +11,11 @@ from Storage.ChangeSettings import *
 
 # The Below Decode Module is Imported from Functions Folder..
 from Functions.Decode import *
+from Functions.Pawn import MovePawn
+from Functions.Rook import MoveRook
+from Functions.Bishop import MoveBishop
+from Functions.Knight import MoveKnight
+from Functions.KingAndQueen import MoveKingAndQueen
 
 class MakeFolder(Toplevel):
 	def __init__(self):
@@ -138,32 +143,20 @@ class MakePieces:
 		self.__Color1__ = Color1
 		self.__Color2__ = Color2
 		self.__TopFrame__ = TopFrame
-		self.__RowToNumber__ = {
-			'a': '0',
-			'b': '1',
-			'c': '2',
-			'd': '3',
-			'e': '4',
-			'f': '5',
-			'g': '6',
-			'h': '7'
-		}
-
-		self.__NumberToRow__ = {
-			'0': 'a',
-			'1': 'b',
-			'2': 'c',
-			'3': 'd',
-			'4': 'e',
-			'5': 'f',
-			'6': 'g',
-			'7': 'h'
-		}
 
 	def __SetPieces__(self):
 		RowsWithPieces = [0, 1, 6, 7]
 		Alphabets = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 		self.__PieceCharacteristics__ = {}
+		self.__VirtualBoardTracker__ = []
+
+		for i in range(0, 8):	
+			
+			Row = []
+			for Square in range(0, 8):
+				Row.append('Free')
+			
+			self.__VirtualBoardTracker__.append(Row)
 
 		for x in RowsWithPieces:
 			for y in range(0, 8):
@@ -179,6 +172,8 @@ class MakePieces:
 				CurrentPiece = ""
 				
 				if x == 0: # H row
+					self.__VirtualBoardTracker__[(7-x)][y] = 'Black'
+
 					if y == 0 or y == 7:
 
 						BlockColor = self.__Color1__
@@ -232,6 +227,8 @@ class MakePieces:
 						PieceAttributes['Label'] = ChessPiece 
 				
 				elif x == 1: # G Row
+					self.__VirtualBoardTracker__[(7-x)][y] = 'Black'
+
 					BlockColor = self.__Color2__
 					if y%2 != 0:
 						BlockColor = self.__Color1__
@@ -243,6 +240,8 @@ class MakePieces:
 					PieceAttributes['Label'] = ChessPiece 
 				
 				elif x == 6: # B Row
+					self.__VirtualBoardTracker__[(7-x)][y] = 'White'
+
 					BlockColor = self.__Color1__
 					if y%2 != 0:
 						BlockColor = self.__Color2__
@@ -254,6 +253,8 @@ class MakePieces:
 					PieceAttributes['Label'] = ChessPiece 
 
 				elif x == 7: # A Row
+					self.__VirtualBoardTracker__[(7-x)][y] = 'White'
+
 					if y == 0 or y == 7:
 						BlockColor = self.__Color2__
 						if y == 7:
@@ -313,6 +314,7 @@ class MakePieces:
 	
 	def ReInitiatePieces(self, BoardSquares, Log):
 		"""Function Changes the Color of All The Pieces When Board Colors Are Changed."""
+
 		PieceAttributes = Log.GetCurrentLog()
 
 		for ChessPiece in self.__PieceCharacteristics__:
@@ -335,64 +337,78 @@ class MakePieces:
 				Piece['Label'].destroy()
 
 	def MovePiece(self, ChessPiece, NewSquare, BoardSquares, Log, Action, Compliment):
+		StorMove = False
+
 		if len(ChessPiece) == 1:
 			# No Castling
 			ChessPiece = ChessPiece[0]
+		
 		else:
 			#Castling
 			if Action == "Short-Castled":
 				if ChessPiece[0][:5] == 'White':
-					self.__ChangePosition__(ChessPiece[0], 'g1', BoardSquares, 'e1', "Move") # WhiteKing
-					self.__ChangePosition__(ChessPiece[1], 'f1', BoardSquares, 'h1', "Move") # WhiteRook
+					StoreMove = self.__ChangePosition__(ChessPiece[0], 'g1', BoardSquares, 'e1', "Move") # WhiteKing
+					StoreMove = self.__ChangePosition__(ChessPiece[1], 'f1', BoardSquares, 'h1', "Move") # WhiteRook
 
 				elif ChessPiece[0][:5] == 'Black':
-					self.__ChangePosition__(ChessPiece[0], 'g8', BoardSquares, 'e8', "Move") # BlackKing
-					self.__ChangePosition__(ChessPiece[1], 'f8', BoardSquares, 'h8', "Move") # BlackRook
+					StoreMove = self.__ChangePosition__(ChessPiece[0], 'g8', BoardSquares, 'e8', "Move") # BlackKing
+					StoreMove = self.__ChangePosition__(ChessPiece[1], 'f8', BoardSquares, 'h8', "Move") # BlackRook
 
 			elif Action == "Long-Castled":
 				if ChessPiece[0][:5] == 'White':
-					self.__ChangePosition__(ChessPiece[0], 'c1', BoardSquares, 'e1', "Move") # WhiteKing
-					self.__ChangePosition__(ChessPiece[1], 'd1', BoardSquares, 'a1', "Move") # WhiteRook
+					StoreMove = self.__ChangePosition__(ChessPiece[0], 'c1', BoardSquares, 'e1', "Move") # WhiteKing
+					StoreMove = self.__ChangePosition__(ChessPiece[1], 'd1', BoardSquares, 'a1', "Move") # WhiteRook
 
 				elif ChessPiece[0][:5] == 'Black':
-					self.__ChangePosition__(ChessPiece[0], 'c8', BoardSquares, 'e8', "Move") # BlackKing
-					self.__ChangePosition__(ChessPiece[1], 'd8', BoardSquares, 'a8', "Move") # BlackRook
-			Log.PushLog(CopyDictionary(self.__PieceCharacteristics__), Compliment)
-			return
+					StoreMove = self.__ChangePosition__(ChessPiece[0], 'c8', BoardSquares, 'e8', "Move") # BlackKing
+					StoreMove = self.__ChangePosition__(ChessPiece[1], 'd8', BoardSquares, 'a8', "Move") # BlackRook
+			
+			if StoreMove:
+				Log.PushLog(CopyDictionary(self.__PieceCharacteristics__), Compliment)
+				return True
+			else:
+				return False
 
 		if ChessPiece[5:] == 'King' or ChessPiece[5:] == 'Queen':
 			if len(NewSquare) == 1:	
-				self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, self.__MoveKingAndQueen__(ChessPiece), Action)
+				StoreMove = self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, MoveKingAndQueen(ChessPiece, NewSquare[0], self.__PieceCharacteristics__, self.__VirtualBoardTracker__), Action)
 		
 		elif ChessPiece[5:] == 'Knight':
 			if len(NewSquare) == 1:	
-				self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, self.__MoveKnight__(ChessPiece, NewSquare[0]), Action)
+				StoreMove = self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, MoveKnight(ChessPiece, NewSquare[0], self.__PieceCharacteristics__, self.__VirtualBoardTracker__), Action)
 			elif len(NewSquare) == 2:
-				self.__ChangePosition__(ChessPiece, NewSquare[1], BoardSquares, self.__MoveKnight__(ChessPiece, NewSquare), Action)
+				StoreMove = self.__ChangePosition__(ChessPiece, NewSquare[1], BoardSquares, MoveKnight(ChessPiece, NewSquare, self.__PieceCharacteristics__, self.__VirtualBoardTracker__), Action)
 		
 		elif ChessPiece[5:] == 'Bishop':
 			if len(NewSquare) == 1:		
-				self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, self.__MoveBishop__(ChessPiece, NewSquare[0]), Action)
+				StoreMove = self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, MoveBishop(ChessPiece, NewSquare[0], self.__PieceCharacteristics__, self.__VirtualBoardTracker__), Action)
 		
 		elif ChessPiece[5:] == 'Rook':
 			if len(NewSquare) == 1:
-				self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, self.__MoveRook__(ChessPiece, NewSquare[0], Action), Action)
+				StoreMove = self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, MoveRook(ChessPiece, NewSquare[0], Action, self.__PieceCharacteristics__, self.__VirtualBoardTracker__), Action)
 			elif len(NewSquare) == 2:
-				self.__ChangePosition__(ChessPiece, NewSquare[1], BoardSquares, self.__MoveRook__(ChessPiece, NewSquare, Action), Action)
+				StoreMove = self.__ChangePosition__(ChessPiece, NewSquare[1], BoardSquares, MoveRook(ChessPiece, NewSquare, Action, self.__PieceCharacteristics__, self.__VirtualBoardTracker__), Action)
 
 		elif ChessPiece[5:] == 'Pawn':
 			if len(NewSquare) == 1:
-				self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, self.__MovePawn__(ChessPiece, NewSquare, Action), Action)
+				StoreMove = self.__ChangePosition__(ChessPiece, NewSquare[0], BoardSquares, MovePawn(ChessPiece, NewSquare, Action, self.__PieceCharacteristics__, self.__VirtualBoardTracker__), Action)
 			else:
-				self.__ChangePosition__(ChessPiece, NewSquare[1], BoardSquares, self.__MovePawn__(ChessPiece, NewSquare, Action), Action)
+				StoreMove = self.__ChangePosition__(ChessPiece, NewSquare[1], BoardSquares, MovePawn(ChessPiece, NewSquare, Action, self.__PieceCharacteristics__, self.__VirtualBoardTracker__), Action)
 
 
 		# In Log File I need NewSquare, BoardSquares
-		Log.PushLog(CopyDictionary(self.__PieceCharacteristics__), Compliment)
-		return
+		if StoreMove:
+			Log.PushLog(CopyDictionary(self.__PieceCharacteristics__), Compliment)
+			return True
+		else:
+			return False
 			
 	def __ChangePosition__(self, ChessPiece, NewSquare, BoardSquares, Address, Action):
 		"""Changes Position Of The Choosen Piece.."""
+		if Address == None:
+			MoveError = "{CP} cannot {A} to {NS}.\n Please reload the game after recifying the fault in game.".format(CP=ChessPiece, A=Action, NS=NewSquare)
+			MessageBox.showerror("Error: ", MoveError)
+			return False
 
 		if Action == "Capture":
 			for Piece in self.__PieceCharacteristics__: # e.g. 'WhiteRook' -> Piece
@@ -404,312 +420,7 @@ class MakePieces:
 			if Piece['CurrentSquare'] == Address:
 				Piece['CurrentSquare'] = NewSquare
 
-	def __MovePawn__(self, ChessPiece, NewSquare, Action):
-		""" Makes The Pawn Move on the board."""
-		
-		if ChessPiece[:5] == 'White':
-			for Pawn in self.__PieceCharacteristics__[ChessPiece]:
-				if Action == 'Capture':
-					if Pawn['CurrentSquare'][0] == NewSquare[0]:
-						X_PawnSquare =  int(Pawn['CurrentSquare'][1])-1 # Integer Coordinate
-						Y_PawnSquare = int(self.__RowToNumber__[Pawn['CurrentSquare'][0]]) # Integer Coordinate
-				
-						AvailableSquares = []
-
-						# Right Piece Capture By Pawn..
-						if Y_PawnSquare+1 <= 7:
-							AvailableSquares.append((self.__NumberToRow__[(str(Y_PawnSquare+1))]+str(X_PawnSquare+2)))
-					
-						# Left Piece Capture By Pawn..
-						if Y_PawnSquare-1 >= 0:
-							AvailableSquares.append((self.__NumberToRow__[(str(Y_PawnSquare-1))]+str(X_PawnSquare+2)))				
-				
-						if NewSquare[1] in AvailableSquares:
-							return Pawn['CurrentSquare'] 
-			
-				elif Action == 'Move':
-					X_PawnSquare =  int(Pawn['CurrentSquare'][1])-1 # Integer Coordinate
-					Y_PawnSquare = int(self.__RowToNumber__[Pawn['CurrentSquare'][0]]) # Integer Coordinate
-
-					# Forward MoveMent Of Pawn..
-					AvailableSquares = []
-					AvailableSquares.append(self.__NumberToRow__[(str(Y_PawnSquare))]+str(X_PawnSquare+2))				
-					
-					if Pawn['CurrentSquare'] == Pawn['RealSquare']:
-						AvailableSquares.append(self.__NumberToRow__[(str(Y_PawnSquare))]+str(X_PawnSquare+3))			
-				
-					if NewSquare[0] in AvailableSquares:
-						return Pawn['CurrentSquare']
-
-		elif ChessPiece[:5] == 'Black':
-			for Pawn in self.__PieceCharacteristics__[ChessPiece]:
-				if Action == 'Capture':
-					if Pawn['CurrentSquare'][0] == NewSquare[0]:
-						X_PawnSquare =  int(Pawn['CurrentSquare'][1])-1 # Integer Coordinate
-						Y_PawnSquare = int(self.__RowToNumber__[Pawn['CurrentSquare'][0]]) # Integer Coordinate
-				
-						AvailableSquares = []
-
-						# Right Piece Capture By Pawn..
-						if Y_PawnSquare+1 <= 7:
-							AvailableSquares.append((self.__NumberToRow__[(str(Y_PawnSquare+1))]+str(X_PawnSquare)))
-					
-						# Left Piece Capture By Pawn..
-						if Y_PawnSquare-1 >= 0:
-							AvailableSquares.append((self.__NumberToRow__[(str(Y_PawnSquare-1))]+str(X_PawnSquare)))				
-				
-						if NewSquare[1] in AvailableSquares:
-							return Pawn['CurrentSquare'] 
-			
-				elif Action == 'Move':
-					X_PawnSquare =  int(Pawn['CurrentSquare'][1])-1 # Integer Coordinate
-					Y_PawnSquare = int(self.__RowToNumber__[Pawn['CurrentSquare'][0]]) # Integer Coordinate
-
-					# Forward MoveMent Of Pawn..
-					AvailableSquares = []
-					AvailableSquares.append(self.__NumberToRow__[(str(Y_PawnSquare))]+str(X_PawnSquare))				
-					
-					if Pawn['CurrentSquare'] == Pawn['RealSquare']:
-						AvailableSquares.append(self.__NumberToRow__[(str(Y_PawnSquare))]+str(X_PawnSquare-1))			
-				
-					if NewSquare[0] in AvailableSquares:
-							return Pawn['CurrentSquare']
-
-	def __MoveKingAndQueen__(self, ChessPiece):
-		""" Makes The King and Queen Move on the Board.. """
-		
-		return self.__PieceCharacteristics__[ChessPiece][0]['CurrentSquare']
-
-	def __MoveKnight__(self, ChessPiece, NewSquare):
-		""" Makes The Knight Move On The Board. """
-
-		if len(NewSquare) == 2 and str(type(NewSquare)) == "<class 'list'>":
-			for Knight in self.__PieceCharacteristics__[ChessPiece]:
-				if IsDigit(NewSquare[0]):
-					if Knight['CurrentSquare'][1] == NewSquare[0]:
-						return Knight['CurrentSquare']
-				else:
-					if Knight['CurrentSquare'][0] == NewSquare[0]:
-						return Knight['CurrentSquare']
-
-		FirstKnight = [False]
-		SecondKnight = [False]
-		KnightNumber = 1
-
-		for Knight in self.__PieceCharacteristics__[ChessPiece]:
-			if not Knight['IsInGame']:
-				continue
-
-			X_KnightSquare =  int(Knight['CurrentSquare'][1])-1 # Integer Coordinate
-			Y_KnightSquare = int(self.__RowToNumber__[Knight['CurrentSquare'][0]]) # Integer Coordinate
-			AvailableSquares = []
-
-			# Check Up Movement
-			if X_KnightSquare+2 <= 7: 
-				# Below Right
-				if Y_KnightSquare+1 <= 7:
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_KnightSquare+1))]+str(X_KnightSquare+3)))
-				
-				# Below Left
-				if Y_KnightSquare-1 >= 0:  
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_KnightSquare-1))]+str(X_KnightSquare+3)))
-			
-			# Check Below Movement
-			if X_KnightSquare-2 >= 0: 
-				# Below Right
-				if Y_KnightSquare+1 <= 7:
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_KnightSquare+1))]+str(X_KnightSquare-1)))
-			
-				# Below Left
-				if Y_KnightSquare-1 >= 0:  
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_KnightSquare-1))]+str(X_KnightSquare-1)))
-			
-			# Check Right Movement
-			if Y_KnightSquare+2 <= 7: 
-				# Right Up
-				if X_KnightSquare+1 <= 7:
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_KnightSquare+2))]+str(X_KnightSquare+2)))
-				
-				# Right Below
-				if X_KnightSquare-1 >= 0:  
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_KnightSquare+2))]+str(X_KnightSquare)))
-			
-			# Check Left Movement
-			if Y_KnightSquare-2 >= 0: 
-				#Left Up
-				if X_KnightSquare+1 <= 7:
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_KnightSquare-2))]+str(X_KnightSquare+2)))
-				
-				# Left Below
-				if X_KnightSquare-1 >= 0:  
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_KnightSquare-2))]+str(X_KnightSquare)))
-			
-			if NewSquare in AvailableSquares and KnightNumber == 1:
-				FirstKnight.append(Knight['CurrentSquare'])
-				FirstKnight[0] = True
-
-			elif NewSquare in AvailableSquares and KnightNumber == 2:
-				SecondKnight.append(Knight['CurrentSquare'])
-				SecondKnight[0] = True
-
-			KightNumber = KnightNumber + 1
-		
-		if FirstKnight[0] and not SecondKnight[0]: # First Knight has Access to NewSquare
-			return FirstKnight[1]
-		elif SecondKnight[0] and not FirstKnight[0]: # Second Knight has Access to NewSquare
-			return SecondKnight[1]
-	
-	def __MoveBishop__(self, ChessPiece, NewSquare):
-		""" Both Bishop's Cannot Collide at one Position, Both are of Different Colors.."""
-		
-		FirstBishop = [False]
-		SecondBishop = [False]
-		BishopNumber = 1
-
-		for Bishop in self.__PieceCharacteristics__[ChessPiece]:
-			X_BishopSquare =  int(Bishop['CurrentSquare'][1])-1 # Integer Coordinate
-			Y_BishopSquare = int(self.__RowToNumber__[Bishop['CurrentSquare'][0]]) # Integer Coordinate
-			AvailableSquares = []
-
-			for i in range(1, 8): # Diagonal Up Right..
-				if X_BishopSquare+i <= 7 and Y_BishopSquare+i <= 7:
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_BishopSquare+i))]+str(X_BishopSquare+i+1)))
-				else:
-					break
-			
-			for i in range(1, 8): # Diagonal Up Left..
-				if X_BishopSquare+i <= 7 and Y_BishopSquare-i >= 0:
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_BishopSquare-i))]+str(X_BishopSquare+i+1)))
-				else:
-					break
-			for i in range(1, 8): # Diagonal Down Right..
-				if X_BishopSquare-i >= 0 and Y_BishopSquare+i <= 7:
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_BishopSquare+i))]+str(X_BishopSquare-i+1)))
-				else:
-					break
-			
-			for i in range(1, 8): # Diagonal Down Left..
-				if X_BishopSquare-i >= 0 and Y_BishopSquare-i >= 0:
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_BishopSquare-i))]+str(X_BishopSquare-i+1)))
-				else:
-					break	
-
-			if NewSquare in AvailableSquares and BishopNumber == 1:
-				FirstBishop.append(Bishop['CurrentSquare'])
-				FirstBishop[0] = True
-
-			elif NewSquare in AvailableSquares and BishopNumber == 2:
-				SecondBishop.append(Bishop['CurrentSquare'])
-				SecondBishop[0] = True
-
-			BishopNumber = 	BishopNumber + 1
-		
-			if FirstBishop[0] and not SecondBishop[0]: # First Bishop has Access to NewSquare
-				return FirstBishop[1]
-			elif SecondBishop[0] and not FirstBishop[0]: # Second Bishop has Access to NewSquare
-				return SecondBishop[1]
-	
-	def __RookAllowedToMove__(self, Constant, Start, End, RankOrRow):
-		"""Checks Whether The Rook is Allowed to move or Not."""
-
-		RookCanMove = True
-		Position = ""
-		for i in range(Start, End):
-			
-			if RankOrRow == "Rank":
-				Position = Constant + str(i)
-			elif RankOrRow == "Row":
-				Position = self.__NumberToRow__[str(i)] + Constant
-			
-			for Piece in self.__PieceCharacteristics__: # e.g. 'WhiteRook' -> Piece
-				for PieceNum in self.__PieceCharacteristics__[Piece]: # PieceNum -> WhiteRook: List 
-					if PieceNum['CurrentSquare'] == Position and PieceNum['IsInGame']:
-						return not RookCanMove
-		return RookCanMove
-
-	def __MoveRook__(self, ChessPiece, NewSquare, Action):
-		if len(NewSquare) == 2 and str(type(NewSquare)) == "<class 'list'>":
-			for Rook in self.__PieceCharacteristics__[ChessPiece]:
-				if IsDigit(NewSquare[0]):
-					if Rook['CurrentSquare'][1] == NewSquare[0]:
-						return Rook['CurrentSquare']
-				else:
-					if Rook['CurrentSquare'][0] == NewSquare[0]:
-							return Rook['CurrentSquare']
-
-		FirstRook = [False]
-		SecondRook = [False]
-		RookNumber = 1
-
-		for Rook in self.__PieceCharacteristics__[ChessPiece]:
-			if not Rook['IsInGame']:
-				RookNumber = RookNumber + 1
-				continue
-
-			X_RookSquare =  int(Rook['CurrentSquare'][1])-1 # Integer Coordinate
-			Y_RookSquare = int(self.__RowToNumber__[Rook['CurrentSquare'][0]]) # Integer Coordinate
-			AvailableSquares = []
-
-			for x in range(0, 8):
-				if x != X_RookSquare:
-					AvailableSquares.append((self.__NumberToRow__[(str(Y_RookSquare))]+str(x+1)))
-
-			for y in range(0, 8):
-				if y != Y_RookSquare:
-					AvailableSquares.append((self.__NumberToRow__[(str(y))]+str(X_RookSquare+1)))
-			if Action == "Move":
-				if NewSquare in AvailableSquares and RookNumber == 1:
-					RookAllowed = False
-					if Rook['CurrentSquare'][0] == NewSquare[0]:
-						if int(NewSquare[1]) > int(Rook['CurrentSquare'][1]):
-							RookAllowed = self.__RookAllowedToMove__(Rook['CurrentSquare'][0], int(Rook['CurrentSquare'][1]) + 1, int(NewSquare[1]) + 1, "Rank")
-						else:
-							RookAllowed = self.__RookAllowedToMove__(Rook['CurrentSquare'][0], int(NewSquare[1]), int(Rook['CurrentSquare'][1]), "Rank")
-
-					elif Rook['CurrentSquare'][1] == NewSquare[1]:
-						if int(self.__RowToNumber__[NewSquare[0]]) > int(self.__RowToNumber__[Rook['CurrentSquare'][0]]):
-							RookAllowed = self.__RookAllowedToMove__(Rook['CurrentSquare'][1], int(self.__RowToNumber__[Rook['CurrentSquare'][0]]) + 1, int(self.__RowToNumber__[NewSquare[0]])+1, "Row")
-						else:
-							RookAllowed = self.__RookAllowedToMove__(Rook['CurrentSquare'][1], int(self.__RowToNumber__[NewSquare[0]]), int(self.__RowToNumber__[Rook['CurrentSquare'][0]]), "Row")
-
-					if RookAllowed:
-						FirstRook.append(Rook['CurrentSquare'])
-						FirstRook[0] = True
-
-				elif NewSquare in AvailableSquares and RookNumber == 2:
-					RookAllowed = False
-				
-					if Rook['CurrentSquare'][0] == NewSquare[0]:
-						if int(NewSquare[1]) > int(Rook['CurrentSquare'][1]):
-							RookAllowed = self.__RookAllowedToMove__(Rook['CurrentSquare'][0], int(Rook['CurrentSquare'][1]) + 1, int(NewSquare[1]) + 1, "Rank")
-						else:
-							RookAllowed = self.__RookAllowedToMove__(Rook['CurrentSquare'][0], int(NewSquare[1]), int(Rook['CurrentSquare'][1]), "Rank")
-
-					elif Rook['CurrentSquare'][1] == NewSquare[1]:
-						if int(self.__RowToNumber__[NewSquare[0]]) > int(self.__RowToNumber__[Rook['CurrentSquare'][0]]):
-							RookAllowed = self.__RookAllowedToMove__(Rook['CurrentSquare'][1], int(self.__RowToNumber__[Rook['CurrentSquare'][0]]) + 1, int(self.__RowToNumber__[NewSquare[0]])+1, "Row")
-						else:
-							RookAllowed = self.__RookAllowedToMove__(Rook['CurrentSquare'][1], int(self.__RowToNumber__[NewSquare[0]]), int(self.__RowToNumber__[Rook['CurrentSquare'][0]]), "Row")
-
-					if RookAllowed:
-						SecondRook.append(Rook['CurrentSquare'])
-						SecondRook[0] = True
-
-			elif Action == "Capture":
-				if NewSquare in AvailableSquares and RookNumber == 1:
-					FirstRook.append(Rook['CurrentSquare'])
-					FirstRook[0] = True
-				
-				elif NewSquare in AvailableSquares and RookNumber == 2:
-					SecondRook.append(Rook['CurrentSquare'])
-					SecondRook[0] = True
-			
-			RookNumber = RookNumber + 1
-		
-		if FirstRook[0] and not SecondRook[0]: # First Bishop has Access to NewSquare
-			return FirstRook[1]
-		elif SecondRook[0] and not FirstRook[0]: # Second Bishop has Access to NewSquare
-			return SecondRook[1]
+		return True
 
 	def GetPieceAttributes(self):
 		return self.__PieceCharacteristics__
@@ -863,7 +574,7 @@ class DriverClass(MakeBoard, MakePieces):
 		return self.__Symbols__
 
 	def MakeMove(self, ChessPiece, Square, Log, Action, Compliment):
-		self.__ChessPieces__.MovePiece(ChessPiece, Square, self.__Board__.GetBoardSquares(), Log, Action, Compliment)
+		return self.__ChessPieces__.MovePiece(ChessPiece, Square, self.__Board__.GetBoardSquares(), Log, Action, Compliment)
 
 	def GetBoardSquares(self):
 		return self.__Board__.GetBoardSquares()
@@ -1037,11 +748,17 @@ class Application(object):
 
 			for i in range(0, Game['NumberOfMoves']):
 				if i%2 == 0:
-					self.MakeMove(Game['WhiteMoves'][WhiteMove][1], '1')
-					WhiteMove += 1
+					if self.MakeMove(Game['WhiteMoves'][WhiteMove][1], '1'):
+						WhiteMove += 1
+					else:
+						self.__Logs__.EmptyLogFile()
+						break
 				else:
-					self.MakeMove(Game['BlackMoves'][BlackMove][1], '2')
-					BlackMove += 1
+					if self.MakeMove(Game['BlackMoves'][BlackMove][1], '2'):
+						BlackMove += 1
+					else:
+						self.__Logs__.EmptyLogFile()
+						break
 
 	def MakeMove(self, Move, Side):
 		"""Gets The Information For Each Move In the .txt File Using Decode Function. """
@@ -1056,9 +773,10 @@ class Application(object):
 		
 		if Piece != None and Square != None:
 			if len(Piece) != 0 and len(Square) != 0:
-				self.__ApplicationWindow__.MakeMove(Piece, Square, self.__Logs__, Action, Compliment)
+				return self.__ApplicationWindow__.MakeMove(Piece, Square, self.__Logs__, Action, Compliment)
 		elif Piece is None and Square is None:
 			self.__Logs__.PushLog(None, Compliment)
+			return True
 
 	def NextLogFileMove(self):
 		"""This Function is Called When Next Move Button is Pressed."""

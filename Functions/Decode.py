@@ -1,5 +1,9 @@
 import re as Regx
 
+def Print(Board):
+	for Row in Board:
+		print(Row)
+		
 def CopyDictionary(Dictionary):
 	CopiedDictionary = {}
 	for UniquePiece in Dictionary: # PieceName
@@ -106,6 +110,8 @@ def DecodeMove(ChessMove, Side):
 			"<B>": "Black Won",
 			"<W>": "White Won",
 			"X": "Resigned",
+			"BR": "Black Resigned",
+			"WR": "White Resigned",
 			"C": "Continued",
 			"S": "Stopped",
 			"D": "Draw"
@@ -125,7 +131,7 @@ def DecodeMove(ChessMove, Side):
 			ChessMove = ChessMove[:i]
 			break
 
-	GameEnded = Regx.compile(r'[XCSD]')
+	GameEnded = Regx.compile(r'[XCSD]|WR|BR')
 
 	if GameEnded.search(ChessMove) != None:
 		return [None, None, None, Symbols[ChessMove]]
